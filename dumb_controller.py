@@ -8,15 +8,29 @@ class DumbElevatorController:
         it contains. Each is a list, and the floors list is ordered from the bottom floor to the top (floor 1, floor2,
         etc.)."""
         an_elevator = elevators[0]     # Let's use the first elevator
+        an_elevator['direction'] = 'up'    # Let's attach some arbitrary datum to it that we'll use later.
 
-        # Whenever the elevator is idle (has no more queued destinations), tell it to go visit every floor:
+        # Whenever the elevator is idle, tell it to go in the direction we think we're going.
         def handle_idle(elevator):
-            if elevator.floor.number == 0:
-                elevator.go_up()
-            # for n in range(len(floors)):
-            #     elevator.goToFloor(n)
+            """Whenever the elevator is idle, tell it to go in the direction we think we're going. If we hit the
+            end of the run, then switch directions."""
+            if elevator.floor_num == len(floors) - 1 and elevator['direction'] == 'up':
+                elevator['direction'] = 'down'
+            elif elevator.floor_num == 0 and elevator['direction'] == 'down':
+                elevator['direction'] = 'up'
 
-        an_elevator.on("idle", handle_idle)
+            if elevator['direction'] == 'up':
+                elevator.go_up()
+            else:
+                elevator.go_down()
+
+        # Whenever the elevator reaches a floor, open the doors.
+        def handle_arrive_at_floor(elevator, floor):
+            elevator.open_doors_and_board_riders(elevator['direction'] == 'up')
+
+        an_elevator.on('idle', handle_idle)
+        an_elevator.on('arrive_at_floor', handle_arrive_at_floor)
+        an_elevator.open_doors_and_board_riders(an_elevator['direction'] == 'up')
 
     def update(self, elapsed, elevators, floors):
         """I will call this function periodically. The elapsed value will contain the number of seconds (in the
